@@ -1,18 +1,24 @@
-import gymnasium as gym 
-import stable_retro as retro  
+import gymnasium as gym
+import stable_retro as retro
 
-# uv run python -m stable_retro.examples.interactive --game SuperMarioBros-Nes-v0  
+from mario.render import FrameViewer
 
-# Initialise environment 
-# env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
-env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="human")
-observation, info = env.reset() 
+# uv run python -m stable_retro.examples.interactive --game SuperMarioBros-Nes-v0
 
-while True: 
+# Initialise environment
+env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
+observation, info = env.reset()
+
+viewer = FrameViewer()
+
+while viewer.is_open:
     action = env.action_space.sample()
     observation, reward, terminated, truncated, info = env.step(action)
-
-    env.render()
-
+    
+    frame = env.render()
+    viewer.show(frame)
+    
     if terminated or truncated:
         env.reset()
+
+env.close()
