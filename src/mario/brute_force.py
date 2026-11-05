@@ -1,6 +1,15 @@
+import random
 import gymnasium as gym
 import stable_retro as retro
 from mario.render import FrameViewer
+
+# print(env.buttons)
+# ['B', None, 'SELECT', 'START', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'A']
+OPTIMAL_ACTIONS = {
+    "RIGHT":                [0, 0, 0, 0, 0, 0, 0, 1, 0], 
+    "RIGHT_JUMP":           [0, 0, 0, 0, 0, 0, 0, 1, 1],
+    "SPRINT_RIGHT_JUMP":    [1, 0, 0, 0, 0, 0, 0, 1, 1],
+}
 
 # Initialise environment
 env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
@@ -20,8 +29,10 @@ for i in range(20):
     initial_lives = None 
     isEnd = False 
 
-    while not isEnd: 
-        action = env.action_space.sample()
+    while not isEnd:
+        # Sample better actions 
+        # action = env.action_space.sample()
+        action = random.choice(list(OPTIMAL_ACTIONS.values()))
         actions.append(action)
 
         observation, reward, terminated, truncated, info = env.step(action)
