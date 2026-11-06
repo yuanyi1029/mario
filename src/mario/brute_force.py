@@ -1,3 +1,4 @@
+import time
 import random
 import gymnasium as gym
 import stable_retro as retro
@@ -20,12 +21,16 @@ best_actions = []
 best_reward = -1 
 
 # Main loop 
-for i in range(20): 
+start_time = time.perf_counter()
+
+for i in range(40): 
     print(f"Searching through iteration {i + 1}...")
     env.reset()
     
+    counter = 0 
     actions = []
     reward = 0 
+    attempt_best_reward = 0 
     initial_lives = None 
     isEnd = False 
 
@@ -36,21 +41,32 @@ for i in range(20):
         actions.append(action)
 
         observation, reward, terminated, truncated, info = env.step(action)
+        counter += 1
 
         if not initial_lives: 
             initial_lives = info["lives"]
         terminated = terminated or info["lives"] < initial_lives
         reward = info["xscrollHi"] * 256 + info["xscrollLo"] 
+        if reward > attempt_best_reward: 
+            attempt_best_reward = reward
+            counter = 0 
         isEnd = terminated or truncated 
 
         if isEnd: 
+            break 
+
+        # Early stopping 
+        if counter > 1200: 
             break 
 
     if reward > best_reward: 
         best_actions = actions 
         best_reward = reward 
 
-print("Search complete!")
+end_time = time.perf_counter()
+total_time = end_time - start_time
+
+print(f"Search complete! Time taken: {total_time:.2f}s")
 print(f"Best reward: {best_reward}")
 
 # Replay
