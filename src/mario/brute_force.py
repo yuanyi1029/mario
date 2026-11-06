@@ -37,7 +37,8 @@ for i in range(40):
     while not isEnd:
         # Sample better actions 
         # action = env.action_space.sample()
-        action = random.choice(list(OPTIMAL_ACTIONS.values()))
+        if len(actions) % 4 == 0:  
+            action = random.choice(list(OPTIMAL_ACTIONS.values()))
         actions.append(action)
 
         observation, reward, terminated, truncated, info = env.step(action)
