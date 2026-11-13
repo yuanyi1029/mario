@@ -1,6 +1,6 @@
 import ctypes
-
 import pyglet
+
 from pyglet import gl
 
 ASPECT_RATIO = 4 / 3

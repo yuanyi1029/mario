@@ -1,7 +1,7 @@
 import time
 import random
-import gymnasium as gym
 import stable_retro as retro
+
 from mario.render import FrameViewer
 
 # print(env.buttons)

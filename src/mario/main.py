@@ -1,5 +1,5 @@
-import gymnasium as gym
 import stable_retro as retro
+
 from mario.render import FrameViewer
 
 # uv run python -m stable_retro.examples.interactive --game SuperMarioBros-Nes-v0

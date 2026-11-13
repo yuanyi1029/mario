@@ -1,5 +1,5 @@
-import gymnasium as gym 
 import stable_retro as retro  
+
 from stable_retro.examples.interactive import Interactive
 from stable_retro.enums import State
 
