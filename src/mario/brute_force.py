@@ -2,6 +2,7 @@ import time
 import random
 import stable_retro as retro
 
+from gymnasium.wrappers import MaxAndSkipObservation
 from mario.render import FrameViewer
 
 # print(env.buttons)
@@ -14,6 +15,7 @@ OPTIMAL_ACTIONS = {
 
 # Initialise environment
 env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
+env = MaxAndSkipObservation(env, skip=4)
 env.reset()
 
 # Initialise variables 
@@ -37,8 +39,7 @@ for i in range(40):
     while not isEnd:
         # Sample better actions 
         # action = env.action_space.sample()
-        if len(actions) % 4 == 0:  
-            action = random.choice(list(OPTIMAL_ACTIONS.values()))
+        action = random.choice(list(OPTIMAL_ACTIONS.values()))
         actions.append(action)
 
         observation, reward, terminated, truncated, info = env.step(action)
@@ -57,7 +58,7 @@ for i in range(40):
             break 
 
         # Early stopping 
-        if counter > 1200: 
+        if counter > 300: 
             break 
 
     if reward > best_reward: 
@@ -70,14 +71,18 @@ total_time = end_time - start_time
 print(f"Search complete! Time taken: {total_time:.2f}s")
 print(f"Best reward: {best_reward}")
 
+env.close() 
+
 # Replay
-env.reset() 
+replay_env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
+replay_env.reset()  
 
 viewer = FrameViewer() 
 for action in best_actions: 
-    observation, reward, terminated, truncated, info = env.step(action) 
+    for _ in range(4): 
+        observation, reward, terminated, truncated, info = replay_env.step(action) 
 
-    frame = env.render() 
-    viewer.show(frame)
+        frame = replay_env.render()
+        viewer.show(frame)
 
-env.close() 
+replay_env.close()
