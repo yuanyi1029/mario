@@ -36,7 +36,9 @@ class Grid:
         return int(self.ram[address])
 
     def to_cell(self, level_x, level_y):
+        # pixel value of the camera's left edge
         camera_left_x = self.read(0x71A) * 256 + self.read(0x71C)
+        
         row = (level_y // 16) - 1 
         col = (level_x // 16) - (camera_left_x // 16)
         
@@ -45,15 +47,21 @@ class Grid:
     def get_blocks(self):
         blocks = np.zeros((Grid.ROWS, Grid.COLS), dtype=int)
 
+        # pixel value of the camera's left edge
         camera_left_x = self.read(0x71A) * 256 + self.read(0x71C)
 
         for i in range(Grid.ROWS):
             for j in range(Grid.COLS):
+                # column in the level (0 - 15 )
                 level_col = camera_left_x // 16 + j
+                # column number in RAM (0 - 31)
                 buffer_col = level_col % 32
-                
+
+                # page number (1 - 2) and offset (0 - 15) of the column 
                 page = buffer_col // 16
-                offset = buffer_col % 16        
+                offset = buffer_col % 16
+
+                # address of the specific tile
                 address = 0x500 + (page * 208) + ((i * 16) + offset)
                 
                 if self.read(address) != 0:
@@ -65,9 +73,14 @@ class Grid:
         enemies = []
         for i in range(5): 
             if self.read(0xF + i) == 1: 
+                # pixel value of the camera's left edge
                 camera_left_x = self.read(0x71A) * 256 + self.read(0x71C)
+
+                # pixel value of enemy's x and y position relative to the game
                 level_x = self.read(0x6E + i) * 256 + self.read(0x87 + i) 
                 level_y = self.read(0xCF + i) 
+
+                # pixel value of enemy's x position relative to the camera
                 screen_x = level_x - camera_left_x
 
                 enemies.append((level_x, level_y, screen_x))
@@ -75,13 +88,15 @@ class Grid:
         return enemies 
 
     def get_mario(self): 
+        # pixel value of mario's x and y position relative to the game
         level_x = self.read(0x6D) * 256 + self.read(0x86)
         level_y = self.read(0xCE)
+
+        # pixel value of mario's x position relative to the camera
         screen_x = self.read(0x3AD)
 
         return (level_x, level_y, screen_x)
 
-    
 # print(env.buttons)
 # ['B', None, 'SELECT', 'START', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'A']
 OPTIMAL_ACTIONS = {
