@@ -1,6 +1,6 @@
 import time
 import random
-import numpy as np 
+import torch
 import stable_retro as retro
 
 from gymnasium.wrappers import MaxAndSkipObservation
@@ -45,19 +45,19 @@ class Grid:
         return row, col
     
     def get_blocks(self):
-        blocks = np.zeros((Grid.ROWS, Grid.COLS), dtype=int)
+        blocks = torch.zeros((Grid.ROWS, Grid.COLS), dtype=torch.float32)
 
         # pixel value of the camera's left edge
         camera_left_x = self.read(0x71A) * 256 + self.read(0x71C)
 
         for i in range(Grid.ROWS):
             for j in range(Grid.COLS):
-                # column in the level (0 - 15 )
+                # column in the level (0 - n)
                 level_col = camera_left_x // 16 + j
                 # column number in RAM (0 - 31)
                 buffer_col = level_col % 32
 
-                # page number (1 - 2) and offset (0 - 15) of the column 
+                # page number (0 - 1) and offset (0 - 15) of the column 
                 page = buffer_col // 16
                 offset = buffer_col % 16
 
