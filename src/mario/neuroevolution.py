@@ -1,5 +1,4 @@
 import time
-import random
 import torch
 import stable_retro as retro
 
@@ -18,16 +17,18 @@ class Grid:
         self.ram = ram  
 
         grid = self.get_blocks()
-        
+
+        # add enemies to the grid
         enemies = self.get_enemies()
         for enemy in enemies: 
             row, col = self.to_cell(enemy[0], enemy[1])
-            if 0 <= row < 13 and 0 <= col < 16: 
+            if 0 <= row < Grid.ROWS and 0 <= col < Grid.COLS: 
                 grid[row, col] = -1 
 
+        # add mario to the grid 
         mario = self.get_mario()
         row, col = self.to_cell(mario[0], mario[1]) 
-        if 0 <= row < 13 and 0 <= col < 16: 
+        if 0 <= row < Grid.ROWS and 0 <= col < Grid.COLS: 
             grid[row, col] = 2
 
         return grid 
@@ -45,7 +46,7 @@ class Grid:
         return row, col
     
     def get_blocks(self):
-        blocks = torch.zeros((Grid.ROWS, Grid.COLS), dtype=torch.float32)
+        blocks = torch.zeros((Grid.ROWS, Grid.COLS))
 
         # pixel value of the camera's left edge
         camera_left_x = self.read(0x71A) * 256 + self.read(0x71C)
@@ -97,84 +98,103 @@ class Grid:
 
         return (level_x, level_y, screen_x)
 
-# print(env.buttons)
+class Network: 
+
+    def __init__(self): 
+        self.w1 = torch.randn(208, 32)
+        self.b1 = torch.zeros(32)
+        self.w2 = torch.randn(32, 16)
+        self.b2 = torch.zeros(16)
+        self.w3 = torch.randn(16, 12)
+        self.b3 = torch.zeros(12)
+
+    def forward(self, x):
+        x = x.flatten() 
+        x = torch.relu(x @ self.w1 + self.b1)
+        x = torch.relu(x @ self.w2 + self.b2)
+        x = x @ self.w3 + self.b3
+        return x  
+
+# button order used by stable-retro (env.unwrapped.buttons):
 # ['B', None, 'SELECT', 'START', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'A']
+# actions copied from COMPLEX_MOVEMENT in gym-super-mario-bros
+# https://github.com/Kautenja/gym-super-mario-bros
 OPTIMAL_ACTIONS = {
-    "RIGHT":                [0, 0, 0, 0, 0, 0, 0, 1, 0], 
+    "NONE":                 [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "RIGHT":                [0, 0, 0, 0, 0, 0, 0, 1, 0],
     "RIGHT_JUMP":           [0, 0, 0, 0, 0, 0, 0, 1, 1],
-    "SPRINT_RIGHT_JUMP":    [1, 0, 0, 0, 0, 0, 0, 1, 1],
+    "RIGHT_SPRINT":         [1, 0, 0, 0, 0, 0, 0, 1, 0],
+    "RIGHT_JUMP_SPRINT":    [1, 0, 0, 0, 0, 0, 0, 1, 1],
+    "JUMP":                 [0, 0, 0, 0, 0, 0, 0, 0, 1],
+    "LEFT":                 [0, 0, 0, 0, 0, 0, 1, 0, 0],
+    "LEFT_JUMP":            [0, 0, 0, 0, 0, 0, 1, 0, 1],
+    "LEFT_SPRINT":          [1, 0, 0, 0, 0, 0, 1, 0, 0],
+    "LEFT_JUMP_SPRINT":     [1, 0, 0, 0, 0, 0, 1, 0, 1],
+    "DOWN":                 [0, 0, 0, 0, 0, 1, 0, 0, 0],
+    "UP":                   [0, 0, 0, 0, 1, 0, 0, 0, 0],
 }
 
-# # Initialise environment
-# env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
-# env = MaxAndSkipObservation(env, skip=4)
-# env.reset()
+ACTION_BUTTONS = list(OPTIMAL_ACTIONS.values())
+ACTION_NAMES = list(OPTIMAL_ACTIONS.keys())
 
-# # Initialise variables 
-# best_actions = []
-# best_reward = -1 
+# Initialise environment
+env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
+env = MaxAndSkipObservation(env, skip=4)
+env.reset()
 
-# # Main loop 
-# start_time = time.perf_counter()
+grid = Grid()
+network = Network() 
 
-# for i in range(40): 
-#     print(f"Searching through iteration {i + 1}...")
-#     env.reset()
-    
-#     counter = 0 
-#     actions = []
-#     reward = 0 
-#     attempt_best_reward = 0 
-#     initial_lives = None 
-#     isEnd = False 
+# Initialise variables 
+counter = 0 
+actions = []
+attempt_best_reward = 0 
+initial_lives = None 
+isEnd = False 
 
-#     while not isEnd:
-#         # Sample better actions 
-#         # action = env.action_space.sample()
-#         action = random.choice(list(OPTIMAL_ACTIONS.values()))
-#         actions.append(action)
+# Main loop 
+start_time = time.perf_counter()
 
-#         observation, reward, terminated, truncated, info = env.step(action)
-#         counter += 1
+while not isEnd: 
+    state = grid.build(env.unwrapped.get_ram())
+    logits = network.forward(state)
+    action = ACTION_BUTTONS[torch.argmax(logits)]
+    actions.append(action)
 
-#         if not initial_lives: 
-#             initial_lives = info["lives"]
-#         terminated = terminated or info["lives"] < initial_lives
-#         reward = info["xscrollHi"] * 256 + info["xscrollLo"] 
-#         if reward > attempt_best_reward: 
-#             attempt_best_reward = reward
-#             counter = 0 
-#         isEnd = terminated or truncated 
+    observation, reward, terminated, truncated, info = env.step(action)
+    counter += 1 
 
-#         if isEnd: 
-#             break 
+    if not initial_lives: 
+        initial_lives = info["lives"]
+    terminated = terminated or info["lives"] < initial_lives
+    reward = info["xscrollHi"] * 256 + info["xscrollLo"] 
+    if reward > attempt_best_reward: 
+        attempt_best_reward = reward
+        counter = 0
+    isEnd = terminated or truncated
 
-#         # Early stopping 
-#         if counter > 300: 
-#             break 
+    # Early stopping 
+    if counter > 300: 
+        break 
 
-#     if reward > best_reward: 
-#         best_actions = actions 
-#         best_reward = reward 
+end_time = time.perf_counter()
+total_time = end_time - start_time
 
-# end_time = time.perf_counter()
-# total_time = end_time - start_time
+print(f"Evaluation complete! Time taken: {total_time:.2f}s")
+print(f"Reward: {attempt_best_reward}")
 
-# print(f"Search complete! Time taken: {total_time:.2f}s")
-# print(f"Best reward: {best_reward}")
+env.close() 
 
-# env.close() 
+# Replay
+replay_env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
+replay_env.reset()  
 
-# # Replay
-# replay_env = retro.make(game="SuperMarioBros-Nes-v0", render_mode="rgb_array")
-# replay_env.reset()  
+viewer = FrameViewer() 
+for action in actions:
+    for _ in range(4): 
+        observation, reward, terminated, truncated, info = replay_env.step(action) 
 
-# viewer = FrameViewer() 
-# for action in best_actions: 
-#     for _ in range(4): 
-#         observation, reward, terminated, truncated, info = replay_env.step(action) 
+        frame = replay_env.render()
+        viewer.show(frame)
 
-#         frame = replay_env.render()
-#         viewer.show(frame)
-
-# replay_env.close()
+replay_env.close()
