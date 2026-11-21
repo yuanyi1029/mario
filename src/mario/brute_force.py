@@ -31,7 +31,6 @@ for i in range(40):
     
     counter = 0 
     actions = []
-    reward = 0 
     attempt_best_reward = 0 
     initial_lives = None 
     isEnd = False 
@@ -54,16 +53,13 @@ for i in range(40):
             counter = 0 
         isEnd = terminated or truncated 
 
-        if isEnd: 
-            break 
-
         # Early stopping 
         if counter > 300: 
             break 
 
-    if reward > best_reward: 
+    if attempt_best_reward > best_reward: 
         best_actions = actions 
-        best_reward = reward 
+        best_reward = attempt_best_reward 
 
 end_time = time.perf_counter()
 total_time = end_time - start_time
