@@ -33,9 +33,9 @@ for i in range(40):
     actions = []
     attempt_best_reward = 0 
     initial_lives = None 
-    isEnd = False 
+    is_end = False 
 
-    while not isEnd:
+    while not is_end:
         # Sample better actions 
         # action = env.action_space.sample()
         action = random.choice(list(OPTIMAL_ACTIONS.values()))
@@ -51,7 +51,7 @@ for i in range(40):
         if reward > attempt_best_reward: 
             attempt_best_reward = reward
             counter = 0 
-        isEnd = terminated or truncated 
+        is_end = terminated or truncated 
 
         # Early stopping 
         if counter > 300: 

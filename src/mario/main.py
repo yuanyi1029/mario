@@ -14,9 +14,9 @@ viewer = FrameViewer()
 counter = 0 
 reward = 0 
 initial_lives = None 
-isEnd = False 
+is_end = False 
 
-while not isEnd:    
+while not is_end:    
     # print(env.buttons)
     # ['B', None, 'SELECT', 'START', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'A']
     
@@ -34,12 +34,12 @@ while not isEnd:
         initial_lives = info["lives"]
     terminated = terminated or info["lives"] < initial_lives 
     reward = info["xscrollHi"] * 256 + info["xscrollLo"] 
-    isEnd = terminated or truncated 
+    is_end = terminated or truncated 
     
     frame = env.render()
     viewer.show(frame)
 
-    if isEnd:
+    if is_end:
         print(f"Reward: {reward}, In-game score: {info["score"]}")
         reward = 0 
         # env.reset()
