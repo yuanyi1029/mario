@@ -1,4 +1,5 @@
 import os
+import json
 import time
 import copy 
 import random
@@ -33,9 +34,9 @@ ACTIONS = {
 ACTION_BUTTONS = list(ACTIONS.values())
 ACTION_NAMES = list(ACTIONS.keys())
 
-GENERATIONS = 1000
-POPULATION_SIZE = 50
-PARENT_SIZE = 10
+GENERATIONS = 1
+POPULATION_SIZE = 5
+PARENT_SIZE = 1
 # Probability of mutation for each weight / bias in a child  
 MUTATION_RATE = 0.05 
 # Standard deviation of Gaussian noise applied to mutated weights 
@@ -228,6 +229,17 @@ def train():
     # Initialise training folder 
     run_dir = f"runs/{time.strftime('%Y-%m-%d_%H-%M-%S')}"
     os.makedirs(run_dir)
+
+    # Save configurations
+    config = {
+        "generations": GENERATIONS,
+        "population_size": POPULATION_SIZE,
+        "parent_size": PARENT_SIZE,
+        "mutation_rate": MUTATION_RATE,
+        "mutation_scale": MUTATION_SCALE,
+    }
+    with open(f"{run_dir}/config.json", "w") as f:
+        json.dump(config, f)  
 
     # Initialise environment
     env = retro.make(game=GAME, render_mode="rgb_array")
