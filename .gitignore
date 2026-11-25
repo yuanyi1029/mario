@@ -11,3 +11,9 @@ wheels/
 
 # Game ROMS 
 *.nes
+
+# macOS 
+.DS_Store
+
+# Training output
+runs/

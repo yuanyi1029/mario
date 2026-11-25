@@ -9,8 +9,10 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "gymnasium>=1.4.0",
+    "matplotlib>=3.11.2",
     "stable-retro>=1.0.1",
     "torch>=2.15.0",
+    "tqdm>=4.70.1",
 ]
 
 [project.scripts]
