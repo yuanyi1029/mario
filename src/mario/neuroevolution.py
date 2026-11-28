@@ -12,6 +12,13 @@ from gymnasium.wrappers import MaxAndSkipObservation
 from mario.render import FrameViewer
 
 GAME = "SuperMarioBros-Nes-v0"
+# States used by stable-retro (retro.data.list_states("SuperMarioBros-Nes-v0")): 
+# [
+#   'Level1-1', 'Level1-1-99lives', 'Level1-4', 
+#   'Level2-1', 'Level2-1-clouds', 'Level2-1-clouds-easy', 
+#   'Level3-1', 'Level4-1', 'Level5-1', 'Level6-1', 'Level7-1', 'Level8-1'
+# ]
+LEVEL = "Level1-1"
 
 # Button order used by stable-retro (env.unwrapped.buttons):
 # ['B', None, 'SELECT', 'START', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'A']
@@ -242,7 +249,7 @@ def train():
         json.dump(config, f)  
 
     # Initialise environment
-    env = retro.make(game=GAME, render_mode="rgb_array")
+    env = retro.make(game=GAME, state=LEVEL, render_mode="rgb_array")
     env = MaxAndSkipObservation(env, skip=4)
     env.reset()
 
@@ -297,7 +304,7 @@ def train():
 
 def play(): 
     # Initialise environment
-    env = retro.make(game=GAME, render_mode="rgb_array")
+    env = retro.make(game=GAME, state=LEVEL, render_mode="rgb_array")
     env = MaxAndSkipObservation(env, skip=4)
     env.reset()
 
@@ -316,7 +323,7 @@ def play():
     env.close() 
 
     # Replay
-    replay_env = retro.make(game=GAME, render_mode="rgb_array")
+    replay_env = retro.make(game=GAME, state=LEVEL, render_mode="rgb_array")
     replay_env.reset()  
 
     viewer = FrameViewer() 
